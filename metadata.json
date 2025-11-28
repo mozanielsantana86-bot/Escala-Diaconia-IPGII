@@ -1,0 +1,5 @@
+{
+  "name": "Escala Diáconia IPGII",
+  "description": "Aplicativo para gestão de escalas de voluntários para reuniões dominicais, com integração de mensagens via IA e WhatsApp.",
+  "requestFramePermissions": []
+}
