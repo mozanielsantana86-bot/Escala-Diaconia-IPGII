@@ -83,8 +83,8 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
     <div className="space-y-8">
       
       {/* Stats Summary */}
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-        <h3 className="font-semibold text-blue-800 mb-2">Meta Mensal: Mínimo de {minShifts} plantões</h3>
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800 transition-colors duration-300">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Meta Mensal: Mínimo de {minShifts} plantões</h3>
         <div className="flex flex-wrap gap-2">
           {volunteers.map(vol => {
             const stat = stats.find(s => s.volunteerId === vol.id);
@@ -92,7 +92,7 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
             const isOk = count >= minShifts;
             
             return (
-              <div key={vol.id} className={`text-xs px-2 py-1 rounded-full border ${isOk ? 'bg-green-100 border-green-200 text-green-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}>
+              <div key={vol.id} className={`text-xs px-2 py-1 rounded-full border transition-colors ${isOk ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300' : 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300'}`}>
                 {vol.name}: {count}/{minShifts}
               </div>
             );
@@ -102,10 +102,10 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {monthData.sundays.map((date, sundayIndex) => (
-          <div key={date} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-              <h3 className="font-bold text-lg text-gray-800 capitalize">{formatDatePTBR(date)}</h3>
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Domingo</span>
+          <div key={date} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors duration-300">
+            <div className="bg-gray-50 dark:bg-slate-900/50 px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+              <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 capitalize">{formatDatePTBR(date)}</h3>
+              <span className="text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wide">Domingo</span>
             </div>
             
             <div className="p-4 space-y-4">
@@ -115,18 +115,18 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                 const isFull = currentVolunteers.length >= 3;
                 
                 return (
-                  <div key={time} className="border rounded-lg p-3 hover:border-indigo-300 transition-colors">
+                  <div key={time} className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{time}</span>
-                        <span className={`text-xs font-medium ${isFull ? 'text-red-500' : 'text-green-600'}`}>
+                        <span className="text-sm font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded">{time}</span>
+                        <span className={`text-xs font-medium ${isFull ? 'text-red-500 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                           {currentVolunteers.length}/3 Voluntários
                         </span>
                       </div>
                       {!isFull && (
                         <button 
                           onClick={() => setSelectedShift({ date, time })}
-                          className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                          className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 transition-colors"
                         >
                           + Adicionar
                         </button>
@@ -142,7 +142,7 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
 
                         if (vol) {
                           return (
-                            <div key={vol.id} className="flex justify-between items-center text-sm bg-gray-800 text-white p-2 rounded shadow-sm border border-gray-700 relative overflow-hidden">
+                            <div key={vol.id} className="flex justify-between items-center text-sm bg-gray-800 dark:bg-slate-700 text-white p-2 rounded shadow-sm border border-gray-700 dark:border-slate-600 relative overflow-hidden transition-colors">
                               {specialInfo && (
                                 <div className="absolute top-0 right-0 bg-yellow-500 text-yellow-900 text-[9px] px-1 font-bold">
                                   {specialInfo.label}
@@ -151,7 +151,7 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                               <span className="truncate font-medium">{vol.name}</span>
                               <button 
                                 onClick={() => handleToggleVolunteer(vol.id, date, time)}
-                                className="text-red-300 hover:text-red-200 p-1 hover:bg-gray-700 rounded transition-colors"
+                                className="text-red-300 hover:text-red-200 p-1 hover:bg-gray-700 dark:hover:bg-slate-600 rounded transition-colors"
                                 title="Remover da escala"
                               >
                                 ×
@@ -160,7 +160,7 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                           );
                         } else {
                           return (
-                            <div key={idx} className={`h-9 border border-dashed rounded flex items-center justify-center text-xs ${specialInfo ? 'bg-yellow-50 border-yellow-300 text-yellow-700 font-medium' : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
+                            <div key={idx} className={`h-9 border border-dashed rounded flex items-center justify-center text-xs transition-colors ${specialInfo ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-500 font-medium' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500'}`}>
                               {specialInfo ? specialInfo.placeholder : defaultPlaceholder}
                             </div>
                           );
@@ -177,20 +177,20 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
 
       {/* Selection Modal */}
       {selectedShift && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 border border-gray-100 dark:border-slate-700 transition-colors">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Escalar para {formatDatePTBR(selectedShift.date)} às {selectedShift.time}
               </h3>
-              <button onClick={() => setSelectedShift(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSelectedShift(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <p className="text-gray-500 text-sm mb-4">Selecione um voluntário para adicionar a este plantão.</p>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">Selecione um voluntário para adicionar a este plantão.</p>
 
             <div className="max-h-64 overflow-y-auto space-y-2">
               {volunteers.map(vol => {
@@ -210,8 +210,8 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                     }}
                     className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex justify-between items-center
                       ${isSelected 
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
-                        : 'hover:bg-gray-50 border-gray-200 text-gray-700'
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' 
+                        : 'hover:bg-gray-50 dark:hover:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200'
                       }
                       ${(isFull && !isSelected) ? 'opacity-50 cursor-not-allowed' : ''}
                     `}
@@ -222,10 +222,10 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                 );
               })}
             </div>
-             <div className="mt-4 pt-4 border-t text-right">
+             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 text-right">
                 <button 
                     onClick={() => setSelectedShift(null)}
-                    className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg"
+                    className="px-4 py-2 text-gray-600 dark:text-slate-300 font-medium hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
                     Fechar
                 </button>

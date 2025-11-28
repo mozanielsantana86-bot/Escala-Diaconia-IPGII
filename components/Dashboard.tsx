@@ -55,25 +55,31 @@ const Dashboard: React.FC<Props> = ({ monthData, shifts, volunteers }) => {
       <style>{`
         @media print {
           @page { margin: 1cm; }
-          body { -webkit-print-color-adjust: exact; }
+          body { -webkit-print-color-adjust: exact; background-color: white !important; color: black !important; }
           .no-print { display: none !important; }
+          /* Reset dark mode for print */
+          .dark * {
+            background-color: white !important;
+            color: black !important;
+            border-color: #e5e7eb !important;
+          }
         }
       `}</style>
 
       {/* Modal for Generated Text */}
       {generatedText && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in print:hidden">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Mensagem Gerada (IA)</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-lg w-full p-6 transition-colors">
+            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Mensagem Gerada (IA)</h3>
             <textarea 
-              className="w-full h-48 p-4 border border-gray-700 rounded-lg bg-gray-900 text-gray-100 text-sm mb-4 focus:ring-2 focus:ring-indigo-500 outline-none resize-none font-mono"
+              className="w-full h-48 p-4 border border-gray-700 dark:border-slate-600 rounded-lg bg-gray-900 text-gray-100 text-sm mb-4 focus:ring-2 focus:ring-indigo-500 outline-none resize-none font-mono"
               value={generatedText}
               readOnly
             />
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setGeneratedText(null)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
+                className="px-4 py-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg font-medium transition-colors"
               >
                 Fechar
               </button>
@@ -94,16 +100,16 @@ const Dashboard: React.FC<Props> = ({ monthData, shifts, volunteers }) => {
       )}
 
       {/* Info & Print Controls */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-end justify-between print:hidden">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-4 items-end justify-between print:hidden transition-colors duration-300">
         <div className="flex-1 w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Informações / Aviso da Escala
             </label>
             <input
                 type="text"
                 value={infoText}
                 onChange={(e) => setInfoText(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 transition-colors"
                 placeholder="Ex: Escala sujeita a alterações. Favor chegar 15min antes."
             />
         </div>
@@ -126,31 +132,31 @@ const Dashboard: React.FC<Props> = ({ monthData, shifts, volunteers }) => {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white print:border-none print:shadow-none">
-        <table className="w-full text-sm text-left text-gray-600">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-100 border-b print:bg-gray-100">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-800 print:border-none print:shadow-none transition-colors duration-300">
+        <table className="w-full text-sm text-left text-gray-600 dark:text-slate-300">
+          <thead className="text-xs text-gray-700 dark:text-slate-200 uppercase bg-gray-100 dark:bg-slate-900 border-b dark:border-slate-700 print:bg-gray-100">
             <tr>
               <th className="px-6 py-4 font-bold print:py-2">Data</th>
-              <th className="px-6 py-4 font-bold text-center bg-blue-50/50 w-1/3 print:bg-blue-50 print:py-2">Manhã (09:00)</th>
-              <th className="px-6 py-4 font-bold text-center bg-indigo-50/50 w-1/3 print:bg-indigo-50 print:py-2">Noite (18:00)</th>
+              <th className="px-6 py-4 font-bold text-center bg-blue-50/50 dark:bg-blue-900/20 w-1/3 print:bg-blue-50 print:py-2">Manhã (09:00)</th>
+              <th className="px-6 py-4 font-bold text-center bg-indigo-50/50 dark:bg-indigo-900/20 w-1/3 print:bg-indigo-50 print:py-2">Noite (18:00)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 print:divide-gray-300">
+          <tbody className="divide-y divide-gray-100 dark:divide-slate-700 print:divide-gray-300">
             {monthData.sundays.map(date => {
               const morningVols = getShiftInfo(date, '09:00');
               const eveningVols = getShiftInfo(date, '18:00');
 
               return (
-                <tr key={date} className="hover:bg-gray-50 transition-colors print:break-inside-avoid">
-                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap print:py-2">
+                <tr key={date} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors print:break-inside-avoid">
+                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap print:py-2">
                     {formatDatePTBR(date)}
                   </td>
                   {/* Morning Slot */}
-                  <td className="px-6 py-4 border-l align-top print:py-2">
+                  <td className="px-6 py-4 border-l dark:border-slate-700 align-top print:py-2">
                     <div className="flex flex-col gap-2">
                       {morningVols.map(v => (
-                        <div key={v.id} className="flex items-center justify-between bg-white border px-2 py-1 rounded shadow-sm group print:shadow-none print:border-gray-200">
-                          <span className="print:font-medium text-gray-900">{v.name}</span>
+                        <div key={v.id} className="flex items-center justify-between bg-white dark:bg-slate-700 border dark:border-slate-600 px-2 py-1 rounded shadow-sm group print:shadow-none print:border-gray-200 transition-colors">
+                          <span className="print:font-medium text-gray-900 dark:text-slate-100">{v.name}</span>
                           <button 
                             onClick={() => handleIndividualWhatsapp(v, date, '09:00')}
                             disabled={!!loadingId}
