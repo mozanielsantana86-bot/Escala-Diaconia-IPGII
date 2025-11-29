@@ -5,15 +5,17 @@ interface Props {
   volunteers: Volunteer[];
   onAdd: (volunteer: Volunteer) => void;
   onRemove: (id: string) => void;
+  onUpdate: (volunteer: Volunteer) => void;
 }
 
-const VolunteerManager: React.FC<Props> = ({ volunteers, onAdd, onRemove }) => {
+const VolunteerManager: React.FC<Props> = ({ volunteers, onAdd, onRemove, onUpdate }) => {
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // Section Title State
   const [sectionTitle, setSectionTitle] = useState(() => {
-    return localStorage.getItem('teamSectionTitle') || "Equipe de Voluntários";
+    return localStorage.getItem('teamSectionTitle') || "Diáconos";
   });
 
   useEffect(() => {
@@ -32,6 +34,31 @@ const VolunteerManager: React.FC<Props> = ({ volunteers, onAdd, onRemove }) => {
     onAdd(newVolunteer);
     setNewName('');
     setNewPhone('');
+  };
+
+  const startEdit = (volunteer: Volunteer) => {
+    setEditingId(volunteer.id);
+    setNewName(volunteer.name);
+    setNewPhone(volunteer.phone);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setNewName('');
+    setNewPhone('');
+  };
+
+  const handleUpdate = () => {
+    if (!newName.trim() || !editingId) return;
+
+    const updatedVolunteer: Volunteer = {
+        id: editingId,
+        name: newName,
+        phone: newPhone.replace(/\D/g, '')
+    };
+    
+    onUpdate(updatedVolunteer);
+    cancelEdit();
   };
 
   const handleRemoveClick = (id: string) => {
@@ -53,14 +80,13 @@ const VolunteerManager: React.FC<Props> = ({ volunteers, onAdd, onRemove }) => {
             placeholder="Nome da Seção"
           />
         </div>
-        <p className="text-gray-500 dark:text-slate-400 max-w-xl mx-auto">
-          Gerencie os integrantes do grupo. Adicione novos participantes ou remova aqueles que não fazem mais parte da equipe.
-        </p>
       </div>
 
-      {/* Add Form */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 transition-colors duration-300">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Novo Cadastro</h3>
+      {/* Add/Edit Form */}
+      <div className={`p-6 rounded-xl shadow-sm border transition-colors duration-300 ${editingId ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'}`}>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+            {editingId ? 'Editar Integrante' : 'Novo Cadastro'}
+        </h3>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nome Completo</label>
@@ -82,17 +108,35 @@ const VolunteerManager: React.FC<Props> = ({ volunteers, onAdd, onRemove }) => {
               onChange={(e) => setNewPhone(e.target.value)}
             />
           </div>
-          <div className="flex items-end">
-            <button
-              onClick={handleAdd}
-              disabled={!newName.trim()}
-              className="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Cadastrar
-            </button>
+          <div className="flex items-end gap-2">
+            {editingId ? (
+                <>
+                    <button
+                        onClick={handleUpdate}
+                        disabled={!newName.trim()}
+                        className="w-full sm:w-auto bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                    >
+                        Salvar
+                    </button>
+                    <button
+                        onClick={cancelEdit}
+                        className="w-full sm:w-auto bg-gray-500 text-white px-4 py-2.5 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                    >
+                        Cancelar
+                    </button>
+                </>
+            ) : (
+                <button
+                    onClick={handleAdd}
+                    disabled={!newName.trim()}
+                    className="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Cadastrar
+                </button>
+            )}
           </div>
         </div>
       </div>
@@ -123,15 +167,26 @@ const VolunteerManager: React.FC<Props> = ({ volunteers, onAdd, onRemove }) => {
                     <p className="text-sm text-gray-500 dark:text-slate-400">{vol.phone || 'Sem telefone'}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleRemoveClick(vol.id)}
-                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-2 border-gray-200 dark:border-slate-600 hover:border-red-200 dark:hover:border-red-800 rounded-lg transition-all shrink-0"
-                  title="Remover integrante"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => startEdit(vol)}
+                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-2 border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 rounded-lg transition-all shrink-0"
+                        title="Editar integrante"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </button>
+                    <button
+                        onClick={() => handleRemoveClick(vol.id)}
+                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-2 border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg transition-all shrink-0"
+                        title="Remover integrante"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
               </div>
             ))}
           </div>

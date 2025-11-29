@@ -12,7 +12,7 @@ const App: React.FC = () => {
   
   // App Title State
   const [appTitle, setAppTitle] = useState(() => {
-    return localStorage.getItem('appTitle') || "Voluntários do Domingo";
+    return localStorage.getItem('appTitle') || "Junta Diaconal IPGII";
   });
 
   // Dark Mode State
@@ -65,6 +65,10 @@ const App: React.FC = () => {
   // Logic Handlers
   const handleAddVolunteer = (newVolunteer: Volunteer) => {
     setVolunteers(prev => [...prev, newVolunteer]);
+  };
+
+  const handleUpdateVolunteer = (updatedVolunteer: Volunteer) => {
+    setVolunteers(prev => prev.map(v => v.id === updatedVolunteer.id ? updatedVolunteer : v));
   };
 
   const handleRemoveVolunteer = (id: string) => {
@@ -213,6 +217,7 @@ const App: React.FC = () => {
             volunteers={volunteers} 
             onAdd={handleAddVolunteer}
             onRemove={handleRemoveVolunteer} 
+            onUpdate={handleUpdateVolunteer}
           />
         )}
         
