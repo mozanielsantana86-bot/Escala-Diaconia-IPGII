@@ -10,7 +10,8 @@ interface Props {
 }
 
 const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpdate }) => {
-  const [selectedShift, setSelectedShift] = useState<{ date: string, time: '09:00' | '18:00' } | null>(null);
+  // Now tracking slotIndex as well to know which specific vacancy is being filled
+  const [selectedShift, setSelectedShift] = useState<{ date: string, time: '09:00' | '18:00', slotIndex: number } | null>(null);
 
   const minShifts = monthData.sundays.length === 4 ? 2 : 3;
 
@@ -21,7 +22,7 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
     
     shifts.forEach(s => {
       s.volunteerIds.forEach(vid => {
-        if (counts[vid] !== undefined) counts[vid]++;
+        if (vid && counts[vid] !== undefined) counts[vid]++;
       });
     });
 
@@ -36,27 +37,60 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
     return shifts.find(s => s.date === date && s.time === time) || { id: '', date, time, volunteerIds: [] };
   };
 
-  const handleToggleVolunteer = (volunteerId: string, date: string, time: '09:00' | '18:00') => {
+  const handleAssignSlot = (volunteerId: string, date: string, time: '09:00' | '18:00', slotIndex: number) => {
     const existingShiftIndex = shifts.findIndex(s => s.date === date && s.time === time);
     let newShifts = [...shifts];
-
+    
+    let shift;
     if (existingShiftIndex >= 0) {
-      const shift = { ...newShifts[existingShiftIndex] };
-      if (shift.volunteerIds.includes(volunteerId)) {
-        shift.volunteerIds = shift.volunteerIds.filter(id => id !== volunteerId);
-      } else {
-        if (shift.volunteerIds.length >= 3) return; // Max capacity
-        shift.volunteerIds = [...shift.volunteerIds, volunteerId];
-      }
-      newShifts[existingShiftIndex] = shift;
+      shift = { ...newShifts[existingShiftIndex] };
+      // Ensure array is padded with empty strings to preserve index
+      while(shift.volunteerIds.length <= slotIndex) shift.volunteerIds.push('');
+      // Pad to at least 3 to maintain structure if needed, or just enough for index
+      while(shift.volunteerIds.length < 3) shift.volunteerIds.push('');
     } else {
-      newShifts.push({
+      shift = {
         id: `${date}-${time}`,
         date,
         time,
-        volunteerIds: [volunteerId]
-      });
+        volunteerIds: ['', '', '']
+      };
     }
+
+    // Check if volunteer is already in this shift at another slot
+    const existingVolIndex = shift.volunteerIds.indexOf(volunteerId);
+    if (existingVolIndex !== -1 && existingVolIndex !== slotIndex) {
+        shift.volunteerIds[existingVolIndex] = ''; // Remove from old slot
+    }
+
+    shift.volunteerIds[slotIndex] = volunteerId;
+
+    if (existingShiftIndex >= 0) {
+      newShifts[existingShiftIndex] = shift;
+    } else {
+      newShifts.push(shift);
+    }
+    
+    onShiftUpdate(newShifts);
+    setSelectedShift(null);
+  };
+
+  const handleRemoveSlot = (date: string, time: '09:00' | '18:00', slotIndex: number) => {
+    const existingShiftIndex = shifts.findIndex(s => s.date === date && s.time === time);
+    if (existingShiftIndex === -1) return;
+
+    let newShifts = [...shifts];
+    const shift = { ...newShifts[existingShiftIndex] };
+    
+    // Set specific slot to empty string instead of removing element
+    if (shift.volunteerIds[slotIndex]) {
+        shift.volunteerIds[slotIndex] = '';
+    }
+    
+    // Cleanup: if all empty, remove shift? No, keep it for consistency or handle in DB logic.
+    // For local state, keeping it is fine.
+    
+    newShifts[existingShiftIndex] = shift;
     onShiftUpdate(newShifts);
   };
 
@@ -111,8 +145,8 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
             <div className="p-4 space-y-4">
               {(['09:00', '18:00'] as const).map(time => {
                 const shift = getShiftForSlot(date, time);
-                const currentVolunteers = shift.volunteerIds.map(id => volunteers.find(v => v.id === id)).filter(Boolean) as Volunteer[];
-                const isFull = currentVolunteers.length >= 3;
+                const assignedCount = shift.volunteerIds.filter(id => id && id !== '').length;
+                const isFull = assignedCount >= 3;
                 
                 return (
                   <div key={time} className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
@@ -120,29 +154,22 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded">{time}</span>
                         <span className={`text-xs font-medium ${isFull ? 'text-red-500 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                          {currentVolunteers.length}/3 Voluntários
+                          {assignedCount}/3 Voluntários
                         </span>
                       </div>
-                      {!isFull && (
-                        <button 
-                          onClick={() => setSelectedShift({ date, time })}
-                          className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 transition-colors"
-                        >
-                          + Adicionar
-                        </button>
-                      )}
                     </div>
 
                     {/* Slots Visual */}
                     <div className="space-y-2">
                       {[0, 1, 2].map((idx) => {
-                        const vol = currentVolunteers[idx];
+                        const volId = shift.volunteerIds[idx];
+                        const vol = volId ? volunteers.find(v => v.id === volId) : null;
                         const specialInfo = getSpecialSlotInfo(sundayIndex, time, idx);
                         const defaultPlaceholder = time === '09:00' ? 'Disponível (08:30)' : 'Disponível (17:30)';
 
                         if (vol) {
                           return (
-                            <div key={vol.id} className="flex justify-between items-center text-sm bg-gray-800 dark:bg-slate-700 text-white p-2 rounded shadow-sm border border-gray-700 dark:border-slate-600 relative overflow-hidden transition-colors">
+                            <div key={`${date}-${time}-${idx}`} className="flex justify-between items-center text-sm bg-gray-800 dark:bg-slate-700 text-white p-2 rounded shadow-sm border border-gray-700 dark:border-slate-600 relative overflow-hidden transition-colors">
                               {specialInfo && (
                                 <div className="absolute top-0 right-0 bg-yellow-500 text-yellow-900 text-[9px] px-1 font-bold">
                                   {specialInfo.label}
@@ -150,7 +177,7 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                               )}
                               <span className="truncate font-medium">{vol.name}</span>
                               <button 
-                                onClick={() => handleToggleVolunteer(vol.id, date, time)}
+                                onClick={() => handleRemoveSlot(date, time, idx)}
                                 className="text-red-300 hover:text-red-200 p-1 hover:bg-gray-700 dark:hover:bg-slate-600 rounded transition-colors"
                                 title="Remover da escala"
                               >
@@ -160,9 +187,13 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
                           );
                         } else {
                           return (
-                            <div key={idx} className={`h-9 border border-dashed rounded flex items-center justify-center text-xs transition-colors ${specialInfo ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-500 font-medium' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500'}`}>
+                            <button 
+                              key={idx} 
+                              onClick={() => setSelectedShift({ date, time, slotIndex: idx })}
+                              className={`w-full h-9 border border-dashed rounded flex items-center justify-center text-xs transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 ${specialInfo ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-500 font-medium' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-400 dark:text-slate-500'}`}
+                            >
                               {specialInfo ? specialInfo.placeholder : defaultPlaceholder}
-                            </div>
+                            </button>
                           );
                         }
                       })}
@@ -190,34 +221,34 @@ const Scheduler: React.FC<Props> = ({ monthData, volunteers, shifts, onShiftUpda
               </button>
             </div>
 
-            <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">Selecione um voluntário para adicionar a este plantão.</p>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">
+                Selecione um voluntário para a vaga {selectedShift.slotIndex + 1}.
+            </p>
 
             <div className="max-h-64 overflow-y-auto space-y-2">
               {volunteers.map(vol => {
                 const currentShift = getShiftForSlot(selectedShift.date, selectedShift.time);
-                const isSelected = currentShift.volunteerIds.includes(vol.id);
-                const isFull = currentShift.volunteerIds.length >= 3;
+                // Check if volunteer is already in THIS shift (any slot)
+                const isAlreadyInShift = currentShift.volunteerIds.includes(vol.id);
+                // But if they are clicking to REPLACE themselves (unlikely but possible), enable it? 
+                // No, just prevent duplicate adds for now.
+                const isDisabled = isAlreadyInShift && currentShift.volunteerIds[selectedShift.slotIndex] !== vol.id;
                 
                 return (
                   <button
                     key={vol.id}
-                    disabled={isSelected || (isFull && !isSelected)}
-                    onClick={() => {
-                      handleToggleVolunteer(vol.id, selectedShift.date, selectedShift.time);
-                      if (currentShift.volunteerIds.length + 1 >= 3) {
-                          setSelectedShift(null); // Close if full after add
-                      }
-                    }}
+                    disabled={isDisabled}
+                    onClick={() => handleAssignSlot(vol.id, selectedShift.date, selectedShift.time, selectedShift.slotIndex)}
                     className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex justify-between items-center
-                      ${isSelected 
+                      ${currentShift.volunteerIds[selectedShift.slotIndex] === vol.id
                         ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' 
                         : 'hover:bg-gray-50 dark:hover:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200'
                       }
-                      ${(isFull && !isSelected) ? 'opacity-50 cursor-not-allowed' : ''}
+                      ${isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-900' : ''}
                     `}
                   >
                     <span className="font-medium">{vol.name}</span>
-                    {isSelected && <span>✓</span>}
+                    {currentShift.volunteerIds[selectedShift.slotIndex] === vol.id && <span>✓</span>}
                   </button>
                 );
               })}

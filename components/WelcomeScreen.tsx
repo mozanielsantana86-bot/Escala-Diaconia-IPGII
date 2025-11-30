@@ -36,10 +36,11 @@ const WelcomeScreen: React.FC<Props> = ({ onStart }) => {
 
         {/* Text */}
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight leading-tight">
-          Escala Diaconia IPGII
+          <span className="block text-4xl font-normal mb-1">Escala Diaconia</span>
+          <span className="block text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">IPGII</span>
         </h1>
-        <p className="text-lg text-slate-400 mb-10 leading-relaxed max-w-sm mx-auto italic font-serif">
-          "Pois os que desempenharem bem o diaconato alcançam para si mesmos justa preeminência e muita intrépidez na fé em Cristo Jesus."
+        <p className="text-lg text-slate-400 mb-10 leading-relaxed max-w-sm mx-auto font-bold italic font-serif">
+          "Portanto, meus amados irmãos, sede firmes, inabaláveis e sempre abundantes na obra do Senhor, sabendo que, no Senhor, o vosso trabalho não é vão."
         </p>
 
         {/* Buttons */}
